@@ -1,15 +1,15 @@
 from nfp.layers.wrappers import LSTMStep
 
-from keras.engine import Layer
+from tensorflow.keras.engine import Layer
 
-from keras import activations
-from keras import initializers
-from keras import regularizers
-from keras import constraints
+from tensorflow.keras import activations
+from tensorflow.keras import initializers
+from tensorflow.keras import regularizers
+from tensorflow.keras import constraints
 
 import numpy as np
 import tensorflow as tf
-import keras.backend as K
+import tensorflow.keras.backend as K
 
 
 class MessageLayer(Layer):
@@ -42,11 +42,11 @@ class MessageLayer(Layer):
         self.reducer = reducer
 
         reducer_dict = {
-            None: tf.segment_sum,
-            'sum': tf.segment_sum,
-            'mean': tf.segment_mean,
-            'max': tf.segment_max,
-            'min': tf.segment_min
+            None: tf.math.segment_sum,
+            'sum': tf.math.segment_sum,
+            'mean': tf.math.segment_mean,
+            'max': tf.math.segment_max,
+            'min': tf.math.segment_min
         }
 
         self._reducer = reducer_dict[reducer]
@@ -186,11 +186,11 @@ class Reducer(Layer):
         self.reducer = reducer
 
         reducer_dict = {
-            None: tf.segment_sum,
-            'sum': tf.segment_sum,
-            'mean': tf.segment_mean,
-            'max': tf.segment_max,
-            'min': tf.segment_min
+            None: tf.math.segment_sum,
+            'sum': tf.math.segment_sum,
+            'mean': tf.math.segment_mean,
+            'max': tf.math.segment_max,
+            'min': tf.math.segment_min
         }
 
         self._reducer = reducer_dict[reducer]
@@ -503,13 +503,13 @@ class Set2Set(Layer):
             e = tf.reduce_sum(atom_features * q_expanded, 1)
 
             # Compute the attention based on the scalars for each atom
-            e_exp = tf.exp(e)
-            e_mol = tf.segment_sum(e_exp, atom_split)  # Sum over molecules
+            e_exp = tf.math.exp(e)
+            e_mol = tf.math.segment_sum(e_exp, atom_split)  # Sum over molecules
             e_mol_expanded = tf.gather(e_mol, atom_split)
             a = e_exp / e_mol_expanded
 
             # Compute the sum
-            r = tf.segment_sum(tf.reshape(a, [-1, 1]) * atom_features, atom_split)
+            r = tf.math.segment_sum(tf.reshape(a, [-1, 1]) * atom_features, atom_split)
 
             # Model using this layer must set pad_batches=True
             q_star = tf.concat([h, r], axis=1)
@@ -519,7 +519,7 @@ class Set2Set(Layer):
 
     def _lstm_step(self, h, c):
         """Perform a single step of the LSTM"""
-        z = tf.nn.xw_plus_b(h, self.U, self.b)
+        z = tf.compat.v1.nn.xw_plus_b(h, self.U, self.b)
         i = tf.nn.sigmoid(z[:, :self._n_hidden])
         f = tf.nn.sigmoid(z[:, self._n_hidden:2 * self._n_hidden])
         o = tf.nn.sigmoid(z[:, 2 * self._n_hidden:3 * self._n_hidden])
