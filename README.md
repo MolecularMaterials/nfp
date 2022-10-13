@@ -27,7 +27,8 @@ An overview of how to build a model is shown in `examples/solubility_test_graph_
 The current state-of-the-art architecture on QM9 (published in [4]) is included in `examples/schnet_edgeupdate.py`. This script requires qm9 preprocessing to be run before the model is evaluated with `examples/preprocess_qm9.py`.
 
 ## Specific instructions for Mo2C-GNN branch
-Including codes and graph data described in:\
+![alt text](https://github.com/MolecularMaterials/nfp/tree/Mo2C-GNN/blob/main/Mo2C-GNN.png?raw=true)
+Including code modifications and graph data for:\
 ***"Accelerating Catalyst Screening via Machine-learned Local Coordination Graph Representations"***\
 Hieu A. Doan, Chenyang Li, Logan Ward, Mingxia Zhou, Larry A. Curtiss, and Rajeev S. Assary.
 
