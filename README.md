@@ -1,11 +1,7 @@
 [![Build Status](https://travis-ci.org/NREL/nfp.svg?branch=master)](https://travis-ci.org/NREL/nfp)
 [![PyPI version](https://badge.fury.io/py/nfp.svg)](https://badge.fury.io/py/nfp)
 
-´´´
-
-**Forked from [NREL/nfp](https://github.com/NREL/nfp). Please consider using the main package to get the latest updates.**
-
-´´´
+>**Forked from [NREL/nfp](https://github.com/NREL/nfp). Please consider using the main package to get the latest updates.**
 
 # Neural fingerprint (nfp)
 
