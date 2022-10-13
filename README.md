@@ -26,20 +26,20 @@ An overview of how to build a model is shown in `examples/solubility_test_graph_
 
 The current state-of-the-art architecture on QM9 (published in [4]) is included in `examples/schnet_edgeupdate.py`. This script requires qm9 preprocessing to be run before the model is evaluated with `examples/preprocess_qm9.py`.
 
-# Specific instruction for Mo2C-GNN branch
-Python codes and graph data as described in:\
+## Specific instructions for Mo2C-GNN branch
+Including codes and graph data described in:\
 ***"Accelerating Catalyst Screening via Machine-learned Local Coordination Graph Representations"***\
 Hieu A. Doan, Chenyang Li, Logan Ward, Mingxia Zhou, Larry A. Curtiss, and Rajeev S. Assary.
 
-## Preprocess .graphml files and create an input dataframe
+### Preprocess .graphml files and create an input dataframe
 - Unzip **notebooks/Oads_Mo2C_graphml.tar.gz** that contains all .graphml files of adsorption geometries:\
 `tar -xvf Oads_Mo2C_graphml.tar.gz`
 - Run **notebooks/Oads_Mo2C_catalysts_PreprocessGraphStructure.ipynb** to convert graph data into a dataframe input for MPNN model
 
-## Train the model and make predictions on the test set
+### Train the model and make predictions on the test set
 - Run **notebooks/Oads_Mo2C_catalysts.ipynb**
 
-## Additional instructions for analyzing Atomic Simulation Environment (ASE) database and generating graphs in .graphml format
+### Additional instructions for analyzing Atomic Simulation Environment (ASE) database and generating graphs in .graphml format
 If you want to experiment with building your own adsorption graphs from the VASP outputs used in the paper, please follow the steps below:
 1. Download the data in ASE database format (.db) from the Materials Data Facility [here](https://petreldata.net/mdf/detail/doan_datasets_accelerating_representations_v1.1/)
 2. Run **notebooks/DescriptorGen-networkxGraph-pristine-Mo2C.ipynb** and **notebooks/DescriptorGen-networkxGraph-doped-Mo2C.ipynb** with the downloaded "Oads_Mo2C_pristine_MDF.db" and "Oads_Mo2C_doped_MDF.db", respectively
