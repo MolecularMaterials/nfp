@@ -12,7 +12,7 @@ Peter, 11/9/2018.
 
 """
 
-from keras.layers import GRUCell, LSTMCell
+from tensorflow.keras.layers import GRUCell, LSTMCell
 
 
 class GRUStep(GRUCell): 
