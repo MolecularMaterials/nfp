@@ -6,9 +6,207 @@ from tqdm import tqdm
 from rdkit import Chem
 from rdkit.Chem import MolFromSmiles, MolToSmiles, AddHs
 
-from nfp.preprocessing import features
+from nfp.preprocessing import features, features_graph
 from nfp.preprocessing.features import Tokenizer
+from nfp.preprocessing.features_graph import Tokenizer
 
+from ase.io import read, write
+import networkx as nx
+
+class AdsGraphPreprocessor(object):
+    """ Given a list of catalyst adsorption grahps (i.e. .graphml format), encode as atom and
+    connectivity feature matricies.
+
+    Example:
+    >>> preprocessor = AdsGraphPreprocessor(explicit_hs=False)
+    >>> inputs = preprocessor.fit(data.graphml)
+    """
+
+    def __init__(self, atom_features=None, bond_features=None):
+        """
+
+        atom_features : function
+            A function applied to an rdkit.Atom that returns some
+            representation (i.e., string, integer) for the Tokenizer class.
+        bond_features : function
+            A function applied to an rdkit Bond to return some description.
+
+        """
+
+        self.atom_tokenizer = Tokenizer()
+        self.bond_tokenizer = Tokenizer()
+
+        if atom_features is None:
+            atom_features = features_graph.atom_features_v1
+
+        if bond_features is None:
+            bond_features = features_graph.bond_features_v1
+
+        self.atom_features = atom_features
+        self.bond_features = bond_features
+
+
+    def fit(self, graph_iterator):
+        """ Fit an iterator of networkx graphs, creating new atom and bond
+        tokens for unseen adsorption graphs. Returns a dictionary with 'atom' and
+        'connectivity' entries """
+        return list(self.preprocess(graph_iterator, train=True))
+
+
+    def predict(self, graph_iterator):
+        """ Uses previously determined atom and bond tokens to convert a networkx graph
+        iterator into 'atom' and 'connectivity' matrices. Ensures that atom and
+        bond classes commute with previously determined results. """
+        return list(self.preprocess(graph_iterator, train=False))
+
+    def preprocess(self, graph_iterator, train=True):
+
+        self.atom_tokenizer.train = train
+        self.bond_tokenizer.train = train
+
+        for graph in tqdm(graph_iterator,desc='Processing graphs'):
+            yield self.construct_feature_matrices(graph)
+
+    def fit_df(self, df_iterator):
+        """ Fit an iterator of networkx graphs, creating new atom and bond
+        tokens for unseen adsorption graphs. Returns a dictionary with 'atom' and
+        'connectivity' entries """
+        return list(self.preprocess_df(df_iterator, train=True))
+
+
+    def predict_df(self, df_iterator):
+        """ Uses previously determined atom and bond tokens to convert a networkx graph
+        iterator into 'atom' and 'connectivity' matrices. Ensures that atom and
+        bond classes commute with previously determined results. """
+        return list(self.preprocess_df(df_iterator, train=False))
+
+    def preprocess_df(self, df_iterator, train=True):
+
+        self.atom_tokenizer.train = train
+        self.bond_tokenizer.train = train
+
+        for index,row in tqdm(df_iterator.iterrows(),desc='Processing graphs'):
+            yield self.construct_feature_matrices_df(row)
+
+
+    @property
+    def atom_classes(self):
+        """ The number of atom types found (includes the 0 null-atom type) """
+        return self.atom_tokenizer.num_classes + 1
+
+
+    @property
+    def bond_classes(self):
+        """ The number of bond types found (includes the 0 null-bond type) """
+        return self.bond_tokenizer.num_classes + 1
+
+    @property
+    def atom_dict(self):
+        """ Dictionary for atom classes """
+        return self.atom_tokenizer._data
+
+    def construct_feature_matrices_df(self, graphRow):
+        n_atom = graphRow.nAtoms
+        n_bond = graphRow.nBonds
+
+        # If its an isolated atom, add a self-link
+        if n_bond == 0:
+            n_bond = 1
+
+        atom_feature_matrix = np.zeros(n_atom, dtype='int')
+        bond_feature_matrix = np.zeros(n_bond, dtype='int')
+        connectivity = np.array(graphRow.connectivity)
+
+        bond_index = 0
+        loop_time = time.time()
+        #G = nx.read_graphml(graphRow.graphName)
+        for n,node in enumerate(graphRow.nodes):
+            # Atom Classes
+            atom_feature_matrix[n] = self.atom_tokenizer(graphRow.atomFeatures[n])
+        for m,edge in enumerate(graphRow.edges):
+            # Bond Classes
+            bond_feature_matrix[bond_index] = self.bond_tokenizer(graphRow.bondFeatures[m])
+            bond_index += 1
+        #print(atom_feature_matrix)
+        #print(bond_feature_matrix)
+        #print(connectivity)
+        return {
+            'n_atom': n_atom,
+            'n_bond': n_bond,
+            'atom': atom_feature_matrix,
+            'bond': bond_feature_matrix,
+            'connectivity': connectivity,
+        }
+
+
+    def construct_feature_matrices(self, graph):
+        """ construct a molecule from the given smiles string and return atom
+        and bond classes.
+
+        Returns
+        dict with entries
+        'n_atom' : number of atoms in the molecule
+        'n_bond' : number of bonds in the molecule
+        'atom' : (n_atom,) length list of atom classes
+        'bond' : (n_bond,) list of bond classes
+        'connectivity' : (n_bond, 2) array of source atom, target atom pairs.
+
+        """
+        start_time = time.time()
+        G = nx.read_graphml(graph)
+        print('Finish reading graphml after (s):',time.time()-start_time)
+        n_atom = G.number_of_nodes()
+        n_bond = 2 * G.number_of_edges()
+
+        #print(n_atom,n_bond)
+        # If its an isolated atom, add a self-link
+        if n_bond == 0:
+            n_bond = 1
+
+        atom_feature_matrix = np.zeros(n_atom, dtype='int')
+        bond_feature_matrix = np.zeros(n_bond, dtype='int')
+        connectivity = np.zeros((n_bond, 2), dtype='int')
+
+        bond_index = 0
+        loop_time = time.time()
+        for n,node in enumerate(G.nodes):
+
+            # Atom Classes
+            atom_feature_matrix[n] = self.atom_tokenizer(
+                self.atom_features(G.nodes[node]))
+
+            start_index = list(G.nodes).index(node)
+            #print(node)
+            for m,edge in enumerate(G.edges):
+                #print(edge)
+                if node in edge:
+                    # Is the bond pointing at the target atom
+                    rev = list(G.nodes).index(list(G.edges)[m][0]) != start_index
+                    # Bond Classes
+                    bond_feature_matrix[bond_index] = self.bond_tokenizer(
+                        self.bond_features(G.edges[edge], flipped=rev))
+
+                    # Connectivity
+                    if not rev:  # Original direction
+                        connectivity[bond_index, 0] = list(G.nodes).index(list(G.edges)[m][0])
+                        connectivity[bond_index, 1] = list(G.nodes).index(list(G.edges)[m][1])
+
+                    else:  # Reversed
+                        connectivity[bond_index, 0] = list(G.nodes).index(list(G.edges)[m][1])
+                        connectivity[bond_index, 1] = list(G.nodes).index(list(G.edges)[m][0])
+
+                    bond_index += 1
+        #print(atom_feature_matrix)
+        #print(bond_feature_matrix)
+        #print(connectivity)
+        print('Finish looping through all nodes and edges after (s):', time.time()-loop_time)
+        return {
+            'n_atom': n_atom,
+            'n_bond': n_bond,
+            'atom': atom_feature_matrix,
+            'bond': bond_feature_matrix,
+            'connectivity': connectivity,
+        }
 
 class SmilesPreprocessor(object):
     """ Given a list of SMILES strings, encode these molecules as atom and
