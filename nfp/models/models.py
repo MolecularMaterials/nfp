@@ -1,4 +1,4 @@
-from keras.models import Model
+from tensorflow.keras.models import Model
 
 
 class GraphModel(Model):
