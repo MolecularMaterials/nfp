@@ -1,8 +1,10 @@
 [![Build Status](https://travis-ci.org/NREL/nfp.svg?branch=master)](https://travis-ci.org/NREL/nfp)
 [![PyPI version](https://badge.fury.io/py/nfp.svg)](https://badge.fury.io/py/nfp)
+
 '''
->**Forked from [NREL/nfp](https://github.com/NREL/nfp). Please consider using the main package to get the latest updates.
+>**Forked from [NREL/nfp](https://github.com/NREL/nfp). Please consider using the main package to get the latest updates.**
 '''
+
 # Neural fingerprint (nfp)
 
 Keras layers for end-to-end learning on molecular structure. Based on Keras, Tensorflow, and RDKit. Source code used in the study [Message-passing neural networks for high-throughput polymer screening](https://arxiv.org/abs/1807.10363)
