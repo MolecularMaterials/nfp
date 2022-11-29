@@ -31,7 +31,7 @@ The current state-of-the-art architecture on QM9 (published in [4]) is included 
 ## Specific instructions for Mo2C-GNN branch
 ![alt text](https://github.com/MolecularMaterials/nfp/blob/Mo2C-GNN/Mo2C-GNN.png?raw=true)
 Including code modifications and graph data for:\
-***"Accelerating Catalyst Screening via Machine-learned Local Coordination Graph Representations"***\
+***"Accelerating the Evaluation of Crucial Descriptors for Catalyst Screening via Message Passing Neural Network"***\
 Hieu A. Doan, Chenyang Li, Logan Ward, Mingxia Zhou, Larry A. Curtiss, and Rajeev S. Assary.
 
 ### Preprocess .graphml files and create an input dataframe
